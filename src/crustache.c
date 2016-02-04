@@ -2,6 +2,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "crustache.h"
 #include "houdini.h"
@@ -89,6 +90,7 @@ struct crustache_template {
 	int fail_on_not_found;
 };
 
+#if DEBUG
 static void
 print_indent(int depth)
 {
@@ -106,6 +108,10 @@ print_tree(struct node *node, int depth)
 		print_indent(depth);
 
 		switch (node->type) {
+			case CRUSTACHE_NODE_PARTIAL:
+				printf("partial unsupported\n");
+				break;
+
 			case CRUSTACHE_NODE_MULTIROOT:
 				printf("[\n");
 				depth++;
@@ -155,6 +161,7 @@ print_tree(struct node *node, int depth)
 		printf("]\n");
 	}
 }
+#endif
 
 static void
 node_free(struct node *node)
@@ -172,6 +179,7 @@ node_free(struct node *node)
 			node_free(((struct node_section *)node)->content);
 			break;
 
+		case CRUSTACHE_NODE_PARTIAL:
 		case CRUSTACHE_NODE_MULTIROOT:
 		case CRUSTACHE_NODE_STATIC:
 		case CRUSTACHE_NODE_FETCH:
@@ -247,7 +255,6 @@ railgun(
 {
 	const char *target_max = target + target_len;
 	register unsigned long  hash_pattern;
-	unsigned long hash_target;
 	unsigned long count;
 	unsigned long count_static;
 
@@ -352,8 +359,6 @@ tag_isspace(char c)
 static int
 parse_mustache(struct mustache *mst, const char *buffer, size_t size)
 {
-	size_t i;
-
 	mst->modifier = 0;
 
 	if (size) {
@@ -928,6 +933,7 @@ render_node(
 
 	while (result == 0 && node != NULL) {
 		switch (node->type) {
+		case CRUSTACHE_NODE_FETCH:
 		case CRUSTACHE_NODE_MULTIROOT:
 			break;
 
